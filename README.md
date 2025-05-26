@@ -182,21 +182,20 @@ Protocol for providing current time to the clock:
 
 ## Swift Embedded Support
 
-UniqueHybridLogicalClock provides **partial support** for Swift Embedded environments with the following limitations:
+UniqueHybridLogicalClock provides **partial support** for Swift Embedded environments:
 
-### ✅ **Supported Features**
-- ✅ `Timestamp` struct (without Codable)
-- ✅ `TimeProvider` protocol
-- ✅ Basic `HybridLogicalClock` functionality
-- ✅ Thread-safe operations
-- ✅ Logical clock generation
-
-### ❌ **Unsupported Features** 
-- ❌ `async/await` methods (actors not available)
-- ❌ JSON/Codable serialization (no Foundation)
-- ❌ `Date`-based time providers (no Foundation)
-- ❌ `UUID` support (replaced with simple embedded ID)
-- ❌ Error throwing (Error protocol not available)
+| Feature | Regular Swift | Swift Embedded | Notes |
+|---------|---------------|----------------|-------|
+| `Timestamp` struct | ✅ Full support | ✅ Supported | Core functionality available |
+| `HybridLogicalClock` class | ✅ Full support | ✅ Supported | Basic clock operations |
+| `TimeProvider` protocol | ✅ Full support | ✅ Supported | Custom time sources |
+| Thread-safe operations | ✅ Actors | ⚠️ Limited | Single-threaded only |
+| Logical clock generation | ✅ Full support | ✅ Supported | Monotonic timestamps |
+| `async/await` methods | ✅ Full support | ❌ Not available | No actor support |
+| JSON/Codable serialization | ✅ Full support | ❌ Not available | No Foundation |
+| `Date`-based time providers | ✅ Full support | ❌ Not available | No Foundation |
+| `UUID` support | ✅ Full support | ❌ Not available | Use simple embedded IDs |
+| Error throwing | ✅ Full support | ❌ Not available | No Error protocol |
 
 ### 🔧 **Swift Embedded Usage**
 
