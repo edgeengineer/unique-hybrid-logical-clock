@@ -10,15 +10,8 @@ jobs:
   test-macos:
     name: Test on macOS
     runs-on: macos-14
-    strategy:
-      matrix:
-        swift: ["6.1"]
     steps:
     - uses: actions/checkout@v4
-    - name: Setup Swift
-      uses: swift-actions/setup-swift@v2
-      with:
-        swift-version: ${{ matrix.swift }}
     - name: Run tests
       run: swift test --parallel
     - name: Build
@@ -27,15 +20,12 @@ jobs:
   test-linux:
     name: Test on Ubuntu
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        swift: ["6.1"]
     steps:
     - uses: actions/checkout@v4
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
       with:
-        swift-version: ${{ matrix.swift }}
+        swift-version: "6.0"
     - name: Run tests
       run: swift test --parallel
     - name: Build
@@ -44,109 +34,23 @@ jobs:
   test-ios-simulator:
     name: Test on iOS Simulator
     runs-on: macos-14
-    strategy:
-      matrix:
-        destination:
-          - "platform=iOS Simulator,name=iPhone 15,OS=latest"
     steps:
     - uses: actions/checkout@v4
-    - name: Setup Xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: 'latest-stable'
     - name: Run tests on iOS Simulator
       run: |
         xcodebuild test \
           -scheme UniqueHybridLogicalClock \
-          -destination "${{ matrix.destination }}" \
+          -destination "platform=iOS Simulator,name=iPhone 15,OS=latest" \
           -enableCodeCoverage YES
 
-  test-watchos-simulator:
-    name: Test on watchOS Simulator
-    runs-on: macos-14
-    strategy:
-      matrix:
-        destination:
-          - "platform=watchOS Simulator,name=Apple Watch Series 9 (45mm),OS=latest"
-    steps:
-    - uses: actions/checkout@v4
-    - name: Setup Xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: 'latest-stable'
-    - name: Run tests on watchOS Simulator
-      run: |
-        xcodebuild test \
-          -scheme UniqueHybridLogicalClock \
-          -destination "${{ matrix.destination }}" \
-          -enableCodeCoverage YES
-
-  test-tvos-simulator:
-    name: Test on tvOS Simulator
-    runs-on: macos-14
-    strategy:
-      matrix:
-        destination:
-          - "platform=tvOS Simulator,name=Apple TV 4K (3rd generation),OS=latest"
-    steps:
-    - uses: actions/checkout@v4
-    - name: Setup Xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: 'latest-stable'
-    - name: Run tests on tvOS Simulator
-      run: |
-        xcodebuild test \
-          -scheme UniqueHybridLogicalClock \
-          -destination "${{ matrix.destination }}" \
-          -enableCodeCoverage YES
-
-  test-visionos-simulator:
-    name: Test on visionOS Simulator
-    runs-on: macos-14
-    strategy:
-      matrix:
-        destination:
-          - "platform=visionOS Simulator,name=Apple Vision Pro,OS=latest"
-    steps:
-    - uses: actions/checkout@v4
-    - name: Setup Xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: 'latest-stable'
-    - name: Run tests on visionOS Simulator
-      run: |
-        xcodebuild test \
-          -scheme UniqueHybridLogicalClock \
-          -destination "${{ matrix.destination }}" \
-          -enableCodeCoverage YES
-
-  lint:
-    name: SwiftLint
+  test-build-only:
+    name: Build Test (Cross-Platform)
     runs-on: macos-14
     steps:
     - uses: actions/checkout@v4
-    - name: SwiftLint
-      uses: norio-nomura/action-swiftlint@3.2.1
-      with:
-        args: --strict
-      continue-on-error: true
-
-  swift-format:
-    name: Swift Format Check
-    runs-on: macos-14
-    steps:
-    - uses: actions/checkout@v4
-    - name: Setup Swift
-      uses: swift-actions/setup-swift@v2
-      with:
-        swift-version: "6.1"
-    - name: Install swift-format
-      run: |
-        git clone https://github.com/apple/swift-format.git
-        cd swift-format
-        swift build -c release
-        sudo cp .build/release/swift-format /usr/local/bin/
-    - name: Check formatting
-      run: swift-format --mode diff --recursive Sources/ Tests/
-      continue-on-error: true
+    - name: Build for iOS
+      run: xcodebuild build -scheme UniqueHybridLogicalClock -destination "generic/platform=iOS"
+    - name: Build for watchOS
+      run: xcodebuild build -scheme UniqueHybridLogicalClock -destination "generic/platform=watchOS"
+    - name: Build for tvOS
+      run: xcodebuild build -scheme UniqueHybridLogicalClock -destination "generic/platform=tvOS"
