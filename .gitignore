@@ -149,3 +149,7 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+
+# Claude Code files
+CLAUDE.md
+.claude
