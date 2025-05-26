@@ -14,11 +14,11 @@ A Swift implementation of Hybrid Logical Clocks for distributed systems. This li
 
 ## Features
 
-- **Cross-platform**: Supports macOS, iOS, watchOS, tvOS, visionOS, and Linux
+- **Cross-platform**: Supports macOS, iOS, watchOS, tvOS, visionOS, Linux, and Swift Embedded
 - **Thread-safe**: Uses Swift actors for safe concurrent access (no platform-specific locks)
 - **Async/await**: Modern Swift concurrency for optimal performance
 - **Configurable**: Customizable time drift tolerance and clock identifiers
-- **Serializable**: Full `Codable` support for easy serialization
+- **Serializable**: Full `Codable` support for easy serialization (non-embedded platforms)
 - **Well-documented**: Comprehensive DocC documentation with examples
 
 ## What are Hybrid Logical Clocks?
@@ -178,6 +178,51 @@ Protocol for providing current time to the clock:
 - **tvOS**: 16.0+
 - **visionOS**: 1.0+
 - **Linux**: Swift 6.1+
+- **Swift Embedded**: Limited support (see below)
+
+## Swift Embedded Support
+
+UniqueHybridLogicalClock provides **partial support** for Swift Embedded environments with the following limitations:
+
+### ✅ **Supported Features**
+- ✅ `Timestamp` struct (without Codable)
+- ✅ `TimeProvider` protocol
+- ✅ Basic `HybridLogicalClock` functionality
+- ✅ Thread-safe operations
+- ✅ Logical clock generation
+
+### ❌ **Unsupported Features** 
+- ❌ `async/await` methods (actors not available)
+- ❌ JSON/Codable serialization (no Foundation)
+- ❌ `Date`-based time providers (no Foundation)
+- ❌ `UUID` support (replaced with simple embedded ID)
+- ❌ Error throwing (Error protocol not available)
+
+### 🔧 **Swift Embedded Usage**
+
+When using Swift Embedded, the API is synchronous:
+
+```swift
+import UniqueHybridLogicalClock
+
+// Create a clock with default settings
+let hlc = HybridLogicalClock()
+
+// Generate timestamps (note: synchronous in embedded, async in regular Swift)
+let timestamp1 = hlc.newTimestamp()  // or await hlc.newTimestamp() on regular platforms
+let timestamp2 = hlc.newTimestamp()
+
+// Timestamps still maintain ordering
+assert(timestamp1 < timestamp2)
+```
+
+### 📋 **Swift Embedded Considerations**
+
+- **Time Source**: You must provide a custom `TimeProvider` that interfaces with your embedded hardware timers
+- **Unique IDs**: Uses simple 128-bit pseudo-random IDs instead of UUIDs
+- **Error Handling**: Returns result structs instead of throwing errors
+- **No Serialization**: Manual serialization required for persistence
+- **Single-threaded**: No actor-based concurrency, suitable for embedded single-threaded environments
 
 ## Original Implementation
 
@@ -185,7 +230,7 @@ This library is a Swift port of [uhlc-rs](https://github.com/atolab/uhlc-rs), a 
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 

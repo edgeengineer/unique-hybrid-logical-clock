@@ -1,7 +1,9 @@
+#if !SWIFT_EMBEDDED
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else
 import Foundation
+#endif
 #endif
 
 /// Errors that can occur when working with Hybrid Logical Clocks.
@@ -260,38 +262,3 @@ public final class HybridLogicalClock: Sendable {
     }
 }
 
-// MARK: - Convenience Functions
-
-/// Convenience function to create a default HybridLogicalClock
-///
-/// ## Example
-/// ```swift
-/// let clock = createClock()
-/// let timestamp = await clock.newTimestamp()
-/// ```
-///
-/// - Returns: A new HybridLogicalClock with default configuration
-public func createClock() -> HybridLogicalClock {
-    return HybridLogicalClock()
-}
-
-/// Convenience function to create a HybridLogicalClock with custom configuration
-///
-/// ## Example
-/// ```swift
-/// let clock = createClock(id: UUID(), maxDelta: 30.0)
-/// let timestamp = await clock.newTimestamp()
-/// ```
-///
-/// - Parameters:
-///   - id: Unique identifier for this clock instance
-///   - timeProvider: Provider for current time values (defaults to SystemTimeProvider)
-///   - maxDelta: Maximum allowed time drift in seconds (defaults to 60.0)
-/// - Returns: A new HybridLogicalClock with the specified configuration
-public func createClock(
-    id: UUID,
-    timeProvider: TimeProvider = SystemTimeProvider(),
-    maxDelta: TimeInterval = 60.0
-) -> HybridLogicalClock {
-    return HybridLogicalClock(id: id, timeProvider: timeProvider, maxDelta: maxDelta)
-}
