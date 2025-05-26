@@ -52,12 +52,71 @@ public struct SystemTimeProvider: TimeProvider, Sendable {
 ///     maxDelta: 60.0 // 60 seconds max drift
 /// )
 /// ```
-public final class HybridLogicalClock: @unchecked Sendable {
+/// Internal actor to manage timestamp state in a thread-safe manner
+private actor TimestampState {
+    private var lastTimestamp: Timestamp
+    
+    init(initialTimestamp: Timestamp) {
+        self.lastTimestamp = initialTimestamp
+    }
+    
+    func getLastTimestamp() -> Timestamp {
+        return lastTimestamp
+    }
+    
+    func updateTimestamp(with newTimestamp: Timestamp) {
+        lastTimestamp = newTimestamp
+    }
+    
+    func generateTimestamp(
+        currentTime: UInt64,
+        clockId: UUID
+    ) -> Timestamp {
+        let newTimestamp: Timestamp
+        if currentTime > lastTimestamp.time {
+            newTimestamp = Timestamp(time: currentTime, logicalTime: 0, id: clockId)
+        } else {
+            let nextLogicalTime = lastTimestamp.logicalTime + 1
+            newTimestamp = Timestamp(
+                time: lastTimestamp.time,
+                logicalTime: nextLogicalTime,
+                id: clockId
+            )
+        }
+        
+        lastTimestamp = newTimestamp
+        return newTimestamp
+    }
+    
+    func synchronizeWithExternal(
+        externalTimestamp: Timestamp,
+        currentTime: UInt64,
+        clockId: UUID
+    ) -> Timestamp {
+        let maxTime = max(currentTime, max(lastTimestamp.time, externalTimestamp.time))
+        
+        let newLogicalTime: UInt64
+        if maxTime == lastTimestamp.time && maxTime == externalTimestamp.time {
+            newLogicalTime = max(lastTimestamp.logicalTime, externalTimestamp.logicalTime) + 1
+        } else if maxTime == lastTimestamp.time {
+            newLogicalTime = lastTimestamp.logicalTime + 1
+        } else if maxTime == externalTimestamp.time {
+            newLogicalTime = externalTimestamp.logicalTime + 1
+        } else {
+            newLogicalTime = 0
+        }
+        
+        let newTimestamp = Timestamp(time: maxTime, logicalTime: newLogicalTime, id: clockId)
+        lastTimestamp = newTimestamp
+        return newTimestamp
+    }
+}
+
+public final class HybridLogicalClock: Sendable {
     private let id: UUID
     private let timeProvider: TimeProvider
     private let maxDelta: TimeInterval
-    private let lock = NSLock()
-    private var _lastTimestamp: Timestamp
+    private let timestampState: TimestampState
     
     /// Creates a new Hybrid Logical Clock with default configuration.
     ///
@@ -100,7 +159,8 @@ public final class HybridLogicalClock: @unchecked Sendable {
         self.maxDelta = maxDelta
         
         let currentTime = timeProvider.currentTimeNanos()
-        self._lastTimestamp = Timestamp(time: currentTime - 1, logicalTime: 0, id: id)
+        let initialTimestamp = Timestamp(time: currentTime - 1, logicalTime: 0, id: id)
+        self.timestampState = TimestampState(initialTimestamp: initialTimestamp)
     }
     
     /// Generates a new unique timestamp.
@@ -118,26 +178,9 @@ public final class HybridLogicalClock: @unchecked Sendable {
     /// ```
     ///
     /// - Returns: A new unique timestamp
-    public func newTimestamp() -> Timestamp {
-        lock.lock()
-        defer { lock.unlock() }
-        
+    public func newTimestamp() async -> Timestamp {
         let currentTime = timeProvider.currentTimeNanos()
-        
-        let newTimestamp: Timestamp
-        if currentTime > _lastTimestamp.time {
-            newTimestamp = Timestamp(time: currentTime, logicalTime: 0, id: id)
-        } else {
-            let nextLogicalTime = _lastTimestamp.logicalTime + 1
-            newTimestamp = Timestamp(
-                time: _lastTimestamp.time,
-                logicalTime: nextLogicalTime,
-                id: id
-            )
-        }
-        
-        _lastTimestamp = newTimestamp
-        return newTimestamp
+        return await timestampState.generateTimestamp(currentTime: currentTime, clockId: id)
     }
     
     /// Updates the clock with an external timestamp and returns a new timestamp.
@@ -158,10 +201,7 @@ public final class HybridLogicalClock: @unchecked Sendable {
     /// - Parameter externalTimestamp: The timestamp to update with
     /// - Returns: A new timestamp that incorporates the external timestamp
     /// - Throws: `HybridLogicalClockError` if the timestamp is too far from local time
-    public func updateWithTimestamp(_ externalTimestamp: Timestamp) throws -> Timestamp {
-        lock.lock()
-        defer { lock.unlock() }
-        
+    public func updateWithTimestamp(_ externalTimestamp: Timestamp) async throws -> Timestamp {
         let currentTime = timeProvider.currentTimeNanos()
         let externalTime = externalTimestamp.time
         
@@ -174,22 +214,11 @@ public final class HybridLogicalClock: @unchecked Sendable {
             }
         }
         
-        let maxTime = max(currentTime, max(_lastTimestamp.time, externalTime))
-        
-        let newLogicalTime: UInt64
-        if maxTime == _lastTimestamp.time && maxTime == externalTime {
-            newLogicalTime = max(_lastTimestamp.logicalTime, externalTimestamp.logicalTime) + 1
-        } else if maxTime == _lastTimestamp.time {
-            newLogicalTime = _lastTimestamp.logicalTime + 1
-        } else if maxTime == externalTime {
-            newLogicalTime = externalTimestamp.logicalTime + 1
-        } else {
-            newLogicalTime = 0
-        }
-        
-        let newTimestamp = Timestamp(time: maxTime, logicalTime: newLogicalTime, id: id)
-        _lastTimestamp = newTimestamp
-        return newTimestamp
+        return await timestampState.synchronizeWithExternal(
+            externalTimestamp: externalTimestamp,
+            currentTime: currentTime,
+            clockId: id
+        )
     }
     
     /// Returns the last generated timestamp without creating a new one.
@@ -197,16 +226,14 @@ public final class HybridLogicalClock: @unchecked Sendable {
     /// ## Example
     /// ```swift
     /// let hlc = HybridLogicalClock()
-    /// let ts1 = hlc.newTimestamp()
-    /// let lastTs = hlc.lastTimestamp
+    /// let ts1 = await hlc.newTimestamp()
+    /// let lastTs = await hlc.getLastTimestamp()
     /// assert(ts1 == lastTs)
     /// ```
     ///
     /// - Returns: The most recently generated timestamp
-    public var lastTimestamp: Timestamp {
-        lock.lock()
-        defer { lock.unlock() }
-        return _lastTimestamp
+    public func getLastTimestamp() async -> Timestamp {
+        return await timestampState.getLastTimestamp()
     }
     
     /// The unique identifier of this clock instance.
@@ -240,7 +267,7 @@ public final class HybridLogicalClock: @unchecked Sendable {
 /// ## Example
 /// ```swift
 /// let clock = createClock()
-/// let timestamp = clock.newTimestamp()
+/// let timestamp = await clock.newTimestamp()
 /// ```
 ///
 /// - Returns: A new HybridLogicalClock with default configuration
@@ -253,7 +280,7 @@ public func createClock() -> HybridLogicalClock {
 /// ## Example
 /// ```swift
 /// let clock = createClock(id: UUID(), maxDelta: 30.0)
-/// let timestamp = clock.newTimestamp()
+/// let timestamp = await clock.newTimestamp()
 /// ```
 ///
 /// - Parameters:

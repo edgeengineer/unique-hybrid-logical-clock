@@ -15,7 +15,8 @@ A Swift implementation of Hybrid Logical Clocks for distributed systems. This li
 ## Features
 
 - **Cross-platform**: Supports macOS, iOS, watchOS, tvOS, visionOS, and Linux
-- **Thread-safe**: Concurrent timestamp generation with proper synchronization
+- **Thread-safe**: Uses Swift actors for safe concurrent access (no platform-specific locks)
+- **Async/await**: Modern Swift concurrency for optimal performance
 - **Configurable**: Customizable time drift tolerance and clock identifiers
 - **Serializable**: Full `Codable` support for easy serialization
 - **Well-documented**: Comprehensive DocC documentation with examples
@@ -50,9 +51,9 @@ import UniqueHybridLogicalClock
 // Create a clock with default settings
 let hlc = HybridLogicalClock()
 
-// Generate timestamps
-let timestamp1 = hlc.newTimestamp()
-let timestamp2 = hlc.newTimestamp()
+// Generate timestamps (async)
+let timestamp1 = await hlc.newTimestamp()
+let timestamp2 = await hlc.newTimestamp()
 
 // Timestamps are automatically ordered
 assert(timestamp1 < timestamp2)
@@ -73,7 +74,7 @@ let customClock = HybridLogicalClock(
     maxDelta: 60.0                 // Max 60 seconds time drift allowed
 )
 
-let timestamp = customClock.newTimestamp()
+let timestamp = await customClock.newTimestamp()
 ```
 
 ### Clock Synchronization
@@ -85,10 +86,10 @@ let clock1 = HybridLogicalClock()
 let clock2 = HybridLogicalClock()
 
 // Generate a timestamp on clock1
-let ts1 = clock1.newTimestamp()
+let ts1 = await clock1.newTimestamp()
 
 // Synchronize clock2 with the timestamp from clock1
-let ts2 = try clock2.updateWithTimestamp(ts1)
+let ts2 = try await clock2.updateWithTimestamp(ts1)
 
 // The new timestamp preserves causal ordering
 assert(ts1 < ts2)
@@ -101,7 +102,7 @@ import UniqueHybridLogicalClock
 import Foundation
 
 let hlc = HybridLogicalClock()
-let timestamp = hlc.newTimestamp()
+let timestamp = await hlc.newTimestamp()
 
 // Encode to JSON
 let encoder = JSONEncoder()
@@ -124,7 +125,7 @@ let hlc = HybridLogicalClock()
 do {
     // This might throw if the external timestamp is too far from local time
     let externalTimestamp = Timestamp(time: futureTime, logicalTime: 0, id: UUID())
-    let newTimestamp = try hlc.updateWithTimestamp(externalTimestamp)
+    let newTimestamp = try await hlc.updateWithTimestamp(externalTimestamp)
 } catch HybridLogicalClockError.timestampTooFarInFuture(let delta) {
     print("Timestamp is \(delta) seconds in the future")
 } catch HybridLogicalClockError.timestampTooFarInPast(let delta) {
@@ -140,9 +141,9 @@ The main clock class that generates unique timestamps:
 
 - `init()` - Creates a clock with default settings
 - `init(id:timeProvider:maxDelta:)` - Creates a clock with custom configuration
-- `newTimestamp()` - Generates a new unique timestamp
-- `updateWithTimestamp(_:)` - Synchronizes with an external timestamp
-- `lastTimestamp` - Returns the last generated timestamp
+- `newTimestamp() async` - Generates a new unique timestamp
+- `updateWithTimestamp(_:) async throws` - Synchronizes with an external timestamp
+- `getLastTimestamp() async` - Returns the last generated timestamp
 - `clockId` - The unique identifier of this clock
 - `maxTimeDrift` - The maximum allowed time drift
 

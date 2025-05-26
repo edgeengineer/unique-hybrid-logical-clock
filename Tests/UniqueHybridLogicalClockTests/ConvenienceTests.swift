@@ -10,17 +10,17 @@ import Foundation
 struct ConvenienceTests {
     
     @Test("Create clock with default configuration")
-    func createClockDefault() {
+    func createClockDefault() async {
         let clock = createClock()
         
         #expect(clock.maxTimeDrift == 60.0)
         
-        let timestamp = clock.newTimestamp()
+        let timestamp = await clock.newTimestamp()
         #expect(timestamp.id == clock.clockId)
     }
     
     @Test("Create clock with custom configuration")
-    func createClockCustom() {
+    func createClockCustom() async {
         let customId = UUID()
         let customTimeProvider = SystemTimeProvider()
         let customMaxDelta = 30.0
@@ -34,7 +34,7 @@ struct ConvenienceTests {
         #expect(clock.clockId == customId)
         #expect(clock.maxTimeDrift == customMaxDelta)
         
-        let timestamp = clock.newTimestamp()
+        let timestamp = await clock.newTimestamp()
         #expect(timestamp.id == customId)
     }
     
