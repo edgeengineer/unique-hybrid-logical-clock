@@ -9,9 +9,13 @@ on:
 jobs:
   test-macos:
     name: Test on macOS
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
     - uses: actions/checkout@v4
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v2
+      with:
+        swift-version: "6.0"
     - name: Run tests
       run: swift test --parallel
     - name: Build
@@ -33,19 +37,19 @@ jobs:
 
   test-ios-simulator:
     name: Test on iOS Simulator
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
     - uses: actions/checkout@v4
     - name: Run tests on iOS Simulator
       run: |
         xcodebuild test \
           -scheme UniqueHybridLogicalClock \
-          -destination "platform=iOS Simulator,name=iPhone 15,OS=latest" \
+          -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" \
           -enableCodeCoverage YES
 
   test-build-only:
     name: Build Test (Cross-Platform)
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
     - uses: actions/checkout@v4
     - name: Build for iOS

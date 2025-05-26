@@ -3,14 +3,14 @@
 A Swift implementation of Hybrid Logical Clocks for distributed systems. This library is a port of the Rust [uhlc-rs](https://github.com/atolab/uhlc-rs) library.
 
 [![Swift CI](https://github.com/edgeengineer/unique-hybrid-logical-clock/workflows/Swift%20CI/badge.svg)](https://github.com/edgeengineer/unique-hybrid-logical-clock/actions)
-[![Swift 6.0](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
+[![Swift 6.0](https://img.shields.io/badge/Swift-6.0+-orange.svg)](https://swift.org)
 [![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20iOS%20%7C%20watchOS%20%7C%20tvOS%20%7C%20visionOS%20%7C%20Linux-lightgrey.svg)](https://swift.org)
 [![macOS](https://img.shields.io/badge/macOS-13.0+-blue.svg)](https://developer.apple.com/macos/)
 [![iOS](https://img.shields.io/badge/iOS-16.0+-blue.svg)](https://developer.apple.com/ios/)
 [![watchOS](https://img.shields.io/badge/watchOS-9.0+-blue.svg)](https://developer.apple.com/watchos/)
 [![tvOS](https://img.shields.io/badge/tvOS-16.0+-blue.svg)](https://developer.apple.com/tvos/)
 [![visionOS](https://img.shields.io/badge/visionOS-1.0+-blue.svg)](https://developer.apple.com/visionos/)
-[![Linux](https://img.shields.io/badge/Linux-Swift%206.0-red.svg)](https://swift.org)
+[![Linux](https://img.shields.io/badge/Linux-Swift%206.0+-red.svg)](https://swift.org)
 
 ## Features
 
