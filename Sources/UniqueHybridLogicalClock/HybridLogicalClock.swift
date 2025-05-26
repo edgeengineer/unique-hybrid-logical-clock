@@ -232,3 +232,39 @@ public final class HybridLogicalClock: @unchecked Sendable {
         return maxDelta
     }
 }
+
+// MARK: - Convenience Functions
+
+/// Convenience function to create a default HybridLogicalClock
+///
+/// ## Example
+/// ```swift
+/// let clock = createClock()
+/// let timestamp = clock.newTimestamp()
+/// ```
+///
+/// - Returns: A new HybridLogicalClock with default configuration
+public func createClock() -> HybridLogicalClock {
+    return HybridLogicalClock()
+}
+
+/// Convenience function to create a HybridLogicalClock with custom configuration
+///
+/// ## Example
+/// ```swift
+/// let clock = createClock(id: UUID(), maxDelta: 30.0)
+/// let timestamp = clock.newTimestamp()
+/// ```
+///
+/// - Parameters:
+///   - id: Unique identifier for this clock instance
+///   - timeProvider: Provider for current time values (defaults to SystemTimeProvider)
+///   - maxDelta: Maximum allowed time drift in seconds (defaults to 60.0)
+/// - Returns: A new HybridLogicalClock with the specified configuration
+public func createClock(
+    id: UUID,
+    timeProvider: TimeProvider = SystemTimeProvider(),
+    maxDelta: TimeInterval = 60.0
+) -> HybridLogicalClock {
+    return HybridLogicalClock(id: id, timeProvider: timeProvider, maxDelta: maxDelta)
+}
