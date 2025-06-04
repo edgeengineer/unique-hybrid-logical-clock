@@ -33,8 +33,14 @@ struct AdvancedTests {
             let endTime = Date()
             let duration = endTime.timeIntervalSince(startTime)
             
-            // Should complete 10k timestamps in reasonable time (< 1 second)
-            #expect(duration < 1.0, "10k timestamps took \(duration)s, should be < 1s")
+            // Should complete 10k timestamps in reasonable time
+            // iOS Simulator runs slower, so we adjust expectations
+            #if targetEnvironment(simulator)
+            let maxDuration = 5.0  // More lenient for simulator
+            #else
+            let maxDuration = 1.0  // Stricter for real devices/macOS
+            #endif
+            #expect(duration < maxDuration, "10k timestamps took \(duration)s, should be < \(maxDuration)s")
             
             // All timestamps should be unique and ordered
             let sortedTimestamps = timestamps.sorted()
