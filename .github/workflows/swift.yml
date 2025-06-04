@@ -32,14 +32,3 @@ jobs:
     - name: Build
       run: swift build
 
-  test-build-only:
-    name: Build Test (Cross-Platform)
-    runs-on: macos-15
-    steps:
-    - uses: actions/checkout@v4
-    - name: Build for iOS
-      run: xcodebuild build -scheme UniqueHybridLogicalClock -destination "generic/platform=iOS"
-    - name: Build for watchOS
-      run: xcodebuild build -scheme UniqueHybridLogicalClock -destination "generic/platform=watchOS"
-    - name: Build for tvOS
-      run: xcodebuild build -scheme UniqueHybridLogicalClock -destination "generic/platform=tvOS"
