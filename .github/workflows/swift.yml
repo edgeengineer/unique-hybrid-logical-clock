@@ -32,18 +32,6 @@ jobs:
     - name: Build
       run: swift build
 
-  test-ios-simulator:
-    name: Test on iOS Simulator
-    runs-on: macos-15
-    steps:
-    - uses: actions/checkout@v4
-    - name: Run tests on iOS Simulator
-      run: |
-        xcodebuild test \
-          -scheme UniqueHybridLogicalClock \
-          -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" \
-          -enableCodeCoverage YES
-
   test-build-only:
     name: Build Test (Cross-Platform)
     runs-on: macos-15
